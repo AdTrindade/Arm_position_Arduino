@@ -1,0 +1,77 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Oct 18 21:26:44 2020
+
+Software creado para recibir eventos de la interface serial del arduino uno.
+Todavia no esta implementado visualizacion/representacion de los angulos 
+
+@author: adriano trindade, adtrin@hotmail.com
+"""
+import serial
+import struct 
+import matplotlib.pyplot as plt
+
+ejeX = []
+ejeY = []
+ejeAX = []
+ejeAY = []
+
+plt.ion()
+
+def configArea():
+    plt.ylim(0,600) # Configura area virtual de 600cm para que los sensores usen ese espacio
+    plt.title('Control de distancia de los ejes')      #Titulo del grafico
+    plt.grid(True)                                  #Habilita Grid
+    plt.ylabel('Altura en Cm') # altura del brazo hasta el piso
+    plt.xlabel('Distancia de la pared en Cm') #distancia del brazo del lado izquierdo o derecho
+    plt.xlim(0,600) # delimitando espacio maximo en X e Y 
+    plt.scatter(ejeX,ejeY)       #plota los puntos de los sensores X e Y en la pantalla
+    plt.legend(loc='upper left')      
+
+
+ser = serial.Serial('/dev/ttyACM0',9600,
+parity=serial.PARITY_NONE,
+stopbits=serial.STOPBITS_ONE,
+bytesize=serial.EIGHTBITS) 
+ser.write(b"T") #envia un valor, solo para que la tarjeta comience a enviar enventos
+size = struct.calcsize('<Bff') #Dato recibido debe ser formato big endian (B-unsigned char)+(float(4)+float(4))
+print(size) #imprime tamaño
+
+while True:
+        ser.write(b'T')
+        data = ser.read(size)
+        tup = struct.unpack('<Bff', data)
+         
+        if tup[0] == 98: #
+            Ax = float('%.2f' % (tup[1]))
+            Ay = float('%.2f' % (tup[2]))
+            print ("Angulo Xc:",Ax)
+            print ("Angulo Yc:",Ay)
+        elif tup[0] == 97:
+            DisX = float('%.2f' % (tup[1]))
+            DisY = float('%.2f' % (tup[2]))
+            print ("Distancia X:",DisX)
+            print ("Distancia Y:",DisY) 
+
+            ejeX.append(DisX)
+            ejeY.append(DisY)
+            ejeAX.append(Ax)
+            ejeAX.append(Ay)
+            configArea()
+            plt.pause(.0005)
+            ejeX.pop(0)
+            ejeY.pop(0)
+            ejeAX.append(0)
+            ejeAY.append(0)
+            plt.clf()
+            
+ser.close()
+
+
+        
+       
+       
+
+
+       

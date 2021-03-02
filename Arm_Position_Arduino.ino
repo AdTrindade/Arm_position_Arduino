@@ -1,3 +1,5 @@
+//Baseado no programa original de JohnChi
+//Modificado por :
 //Adriano Trindade 
 //e-mail  adtrin@hotmail.com
 //El proyecto consiste, en enviar la inclinacion del brazo + posicion, para un display LCD de 2 lineas 16 columnas y tambem
@@ -15,18 +17,15 @@ struct UltrasonidoXY
    uint8_t fim   ;
    float  X      ;
    float  Y      ;
-   
-   
-};
 
+};
 
 struct Inclinacion 
 {
    uint8_t fim    ;
    float   aX     ;
    float   aY     ;
-     
-  
+ 
 };
 
 void enviaDatos(byte *XY, int ancho)
@@ -38,8 +37,6 @@ void enviaDatos(byte *XY, int ancho)
 }
 //enviaDatos((byte*)&XY, sizeof(XY));
 
-
-
 float XY (const int Trigger, const int Echo)
 {
   digitalWrite(Trigger, LOW);
@@ -47,12 +44,12 @@ float XY (const int Trigger, const int Echo)
   digitalWrite(Trigger, HIGH);
   delayMicroseconds(10);
   t = pulseIn(Echo, HIGH); //obtenemos el ancho del pulso
-  distancia =  t *0.034/2 ;
+  distancia =  t *0.034/2 ; // v_sonido(ida--> <--vuelta) = (340m/s) = 34.000cm/s = 0.034cm/us  
   return distancia;  
 }
  
 //Direccion I2C de la IMU
-#define MPU 0x68
+#define MPU 0x68  // AD0 = 1101000b
  
 //Ratios de conversion
 #define A_R 16384.0 // least significant bit per g) bit //(Segun datasheet)
@@ -81,15 +78,15 @@ void setup()
   digitalWrite(2, LOW);
   digitalWrite(8, LOW);
   
-Wire.begin();
+Wire.begin(); //inicializa dispositivo
 Wire.beginTransmission(MPU);
-Wire.write(0x6B);
-Wire.write(0);
+Wire.write(0x6B); //(1101011b) (107Dec) // Registrador PWR_MGMT_1
+Wire.write(0); // Disable I2C Master (Como funcion mas importante en los registradores)
 Wire.endTransmission(true);
 
 Serial.begin(9600);
-lcd.init();              // initialize the lcd 
-lcd.backlight();
+lcd.init();              // inicializa el lcd 2 lineas 16 columnas
+lcd.backlight();  // Prende la luz de fundo del display
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////CALCULOS DE ANGULOS CONFORME COORDINADAS Y ENVIO DE LAS COORDINADAS DE LOS SENSORES DE DISTANCIA //////////////////////////////////
@@ -97,8 +94,8 @@ lcd.backlight();
 
 void loop()
 {
-  struct UltrasonidoXY ultraXY; 
- //Cordinadas venidas del medidor de altura
+  struct UltrasonidoXY ultraXY;  
+ //Coordinadas venidas del medidor de altura
  coordinadaX  =    XY(2,3)     ;
  coordinadaY  =    XY(8,9)     ;
  ultraXY.X    =    coordinadaX ;
@@ -108,7 +105,7 @@ void loop()
  
    //Leer los valores del Acelerometro de la IMU
    Wire.beginTransmission(MPU);
-   Wire.write(0x3B); //Pedir el registro 0x3B - corresponde al AcX
+   Wire.write(0x3B); //Registrador 3B ACCEL_XOUT_H (Responsable por las medidas de los acelerometros)
    Wire.endTransmission(false);
    Wire.requestFrom(MPU,6,true); //A partir del 0x3B, se piden 6 registros
    AcX=Wire.read()<<8|Wire.read(); //Cada valor ocupa 2 registros
@@ -155,7 +152,7 @@ void loop()
  
    //MUESTRO LOS VALORES EN EL DISPLAY COMO REFERENCIA DE PRUEBA
    lcd.setCursor(0, 0);
-   lcd.print("Z");  
+   //lcd.print("Z");  
    //lcd.print(Angle[0],2);
    lcd.print(AZ,2);
    lcd.setCursor(0, 1);
